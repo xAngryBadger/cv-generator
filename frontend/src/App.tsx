@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Preloader } from './components/Preloader'
 import { useLenis } from './hooks/useLenis'
 import { revealVariants, staggerContainer } from './hooks/useScrollReveal'
+import { apiUrl } from './lib/api'
 
 type Language = 'pt' | 'en'
 type Template = 'modern' | 'classic' | 'minimal'
@@ -71,7 +72,7 @@ function App() {
   const handleSubmit = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/generate-cv', {
+      const response = await fetch(apiUrl('/api/generate-cv'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
