@@ -92,16 +92,7 @@ function App() {
     }
   }
 
-  const sections = [
-    { num: '01', title: 'Dados Pessoais', id: 'personal' },
-    { num: '02', title: 'Título e Perfil', id: 'profile' },
-    { num: '03', title: 'Experiência', id: 'experience' },
-    { num: '04', title: 'Projetos', id: 'projects' },
-    { num: '05', title: 'Educação e Skills', id: 'education' },
-    { num: '06', title: 'Configurações', id: 'options' },
-  ]
-
-  return (
+return (
     <>
       {showPreloader && <Preloader onComplete={() => setShowPreloader(false)} />}
 
