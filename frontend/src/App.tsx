@@ -105,7 +105,7 @@ return (
         transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]"
       >
-        <header className="fixed top-0 left-0 right-0 z-40 fade-border-bottom" style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
+        <header className="fixed top-0 left-0 right-0 z-40 fade-border-bottom h-16 flex items-center" style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <motion.div
@@ -114,7 +114,7 @@ return (
                 transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 15 }}
                 className="w-8 h-8 flex items-center justify-center"
               >
-                <svg className="w-6 h-6 text-[var(--color-sage)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </motion.div>
@@ -124,12 +124,12 @@ return (
             </div>
             <div className="flex items-center gap-4">
               <span className="label-mono text-[var(--color-text-muted)]">ATS-friendly</span>
-              <span className="label-mono text-[var(--color-sage)]">PT / EN</span>
+              <span className="label-mono text-[var(--color-primary)]">PT / EN</span>
             </div>
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-6 pt-24 pb-16 lg:px-8">
+        <main className="max-w-7xl mx-auto px-6 pt-20 pb-16 lg:px-8">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -138,7 +138,7 @@ return (
           >
             <div className="lg:col-span-7 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:pr-8">
               <motion.div variants={revealVariants} custom={0} className="mb-10">
-                <p className="eyebrow text-[var(--color-sage)] mb-3">Currículo Profissional</p>
+                <p className="eyebrow text-[var(--color-primary)] mb-3">Currículo Profissional</p>
                 <h2 className="text-3xl md:text-4xl font-serif font-normal text-[var(--color-cream)] leading-tight">
                   Gere seu PDF<br />
                   <span className="text-[var(--color-amber-light)]">em segundos</span>
@@ -198,8 +198,8 @@ return (
                               onClick={() => handleChange('language', lang)}
                               className={`px-4 py-2 text-sm transition-all duration-200 ${
                                 data.language === lang
-                                  ? 'bg-[var(--color-sage)] text-[var(--color-cream)]'
-                                  : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border-b border-[var(--color-border)] hover:border-[var(--color-sage)]'
+                                  ? 'bg-[var(--color-primary)] text-[var(--color-cream)]'
+                                  : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border-b border-[var(--color-border)] hover:border-[var(--color-primary)]'
                               }`}
                             >
                               {lang.toUpperCase()}
@@ -216,8 +216,8 @@ return (
                               onClick={() => handleChange('template', t)}
                               className={`px-4 py-2 text-sm capitalize transition-all duration-200 ${
                                 data.template === t
-                                  ? 'bg-[var(--color-sage)] text-[var(--color-cream)]'
-                                  : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border-b border-[var(--color-border)] hover:border-[var(--color-sage)]'
+                                  ? 'bg-[var(--color-primary)] text-[var(--color-cream)]'
+                                  : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border-b border-[var(--color-border)] hover:border-[var(--color-primary)]'
                               }`}
                             >
                               {t}
@@ -280,7 +280,7 @@ return (
                       <div className="text-center relative z-10">
                         <p className="font-serif text-2xl text-[var(--color-cream)] mb-2">Preview</p>
                         <p className="text-sm text-[var(--color-text-muted)]">Clique em "Baixar PDF" para gerar</p>
-                        <p className="label-mono text-[var(--color-sage)] mt-3">ATS-friendly · PT/EN · Grátis</p>
+                        <p className="label-mono text-[var(--color-primary)] mt-3">ATS-friendly · PT/EN · Grátis</p>
                       </div>
                     </div>
                   )}
@@ -297,7 +297,7 @@ return (
             </p>
             <a
               href="https://github.com/xAngryBadger"
-              className="link-underline label-mono text-[var(--color-sage)] hover:text-[var(--color-sage-light)]"
+              className="link-underline label-mono text-[var(--color-primary)] hover:text-[var(--color-primary-light)]"
             >
               GitHub
             </a>
@@ -316,7 +316,7 @@ function EditorialInput({ label, value, onChange }: { label: string; value: stri
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-transparent border-0 border-b border-[var(--color-border)] px-0 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-sage)] transition-colors duration-200 placeholder:text-[var(--color-offset)]"
+        className="w-full bg-transparent border-0 border-b border-[var(--color-border)] px-0 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)] transition-colors duration-200 placeholder:text-[var(--color-offset)]"
         placeholder={label}
       />
     </div>
@@ -331,7 +331,7 @@ function EditorialTextarea({ label, value, onChange, rows = 3 }: { label: string
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        className="w-full bg-transparent border-0 border-b border-[var(--color-border)] px-0 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-sage)] transition-colors duration-200 resize-vertical placeholder:text-[var(--color-offset)]"
+        className="w-full bg-transparent border-0 border-b border-[var(--color-border)] px-0 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)] transition-colors duration-200 resize-vertical placeholder:text-[var(--color-offset)]"
         placeholder={label}
       />
     </div>
