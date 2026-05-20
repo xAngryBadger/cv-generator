@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Preloader } from './components/Preloader'
 import { useLenis } from './hooks/useLenis'
+import { useSmoothContainer } from './hooks/useSmoothContainer'
 import { revealVariants, staggerContainer } from './hooks/useScrollReveal'
 import { apiUrl } from './lib/api'
 
@@ -64,6 +65,7 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   useLenis()
+  const formScrollRef = useSmoothContainer()
 
   const handleChange = (field: keyof CVData, value: string) => {
     setData(prev => ({ ...prev, [field]: value }))
@@ -105,8 +107,8 @@ return (
         transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]"
       >
-        <header className="fixed top-0 left-0 right-0 z-40 fade-border-bottom h-16 flex items-center" style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+<header className="fixed top-0 left-0 right-0 z-40 fade-border-bottom h-16 flex items-center" style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
+      <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <motion.div
                 initial={{ scale: 0 }}
@@ -136,7 +138,7 @@ return (
             variants={staggerContainer}
             className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12"
           >
-            <div className="lg:col-span-7 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:pr-8">
+            <div ref={formScrollRef} data-lenis-prevent className="lg:col-span-7 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:pr-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[var(--color-border)] [&::-webkit-scrollbar-thumb]:rounded-sm [&::-webkit-scrollbar-track]:transparent">
               <motion.div variants={revealVariants} custom={0} className="mb-10">
                 <p className="eyebrow text-[var(--color-primary)] mb-3">Currículo Profissional</p>
                 <h2 className="text-3xl md:text-4xl font-serif font-normal text-[var(--color-cream)] leading-tight">
