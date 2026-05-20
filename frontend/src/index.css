@@ -13,7 +13,8 @@
   --color-primary-light: #5a7f5f;
   --color-primary-dark: #36553c;
   --color-accent: #eab279;
-  
+  --color-amber-light: #eab279;
+
   /* Base */
   --color-cream: #fffbe7;
   --color-offset: #a8a98f;
@@ -245,6 +246,12 @@ html.lenis {
   color: var(--color-cream);
 }
 
+.btn-clipped:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .link-underline {
   position: relative;
 }
@@ -283,6 +290,7 @@ html.lenis {
 }
 
 .geometric-bg {
+  position: relative;
   background-color: var(--color-bg);
   background-image:
     radial-gradient(

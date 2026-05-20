@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Preloader } from './components/Preloader'
 import { useLenis } from './hooks/useLenis'
@@ -63,9 +63,15 @@ function App() {
   const [data, setData] = useState<CVData>(defaultData)
   const [loading, setLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const prevUrlRef = useRef<string | null>(null)
 
   useLenis()
   const formScrollRef = useSmoothContainer()
+
+  useEffect(() => {
+    if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
+    prevUrlRef.current = previewUrl
+  }, [previewUrl])
 
   const handleChange = (field: keyof CVData, value: string) => {
     setData(prev => ({ ...prev, [field]: value }))
@@ -116,7 +122,7 @@ return (
                 transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 15 }}
                 className="w-8 h-8 flex items-center justify-center"
               >
-                <svg className="w-6 h-6 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-[var(--color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </motion.div>
@@ -197,8 +203,9 @@ return (
                           {(['pt', 'en'] as Language[]).map((lang) => (
                             <button
                               key={lang}
-                              onClick={() => handleChange('language', lang)}
-                              className={`px-4 py-2 text-sm transition-all duration-200 ${
+          onClick={() => handleChange('language', lang)}
+          aria-pressed={data.language === lang}
+          className={`px-4 py-2 text-sm transition-all duration-200 ${
                                 data.language === lang
                                   ? 'bg-[var(--color-primary)] text-[var(--color-cream)]'
                                   : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border-b border-[var(--color-border)] hover:border-[var(--color-primary)]'
@@ -215,8 +222,9 @@ return (
                           {(['modern', 'classic', 'minimal'] as Template[]).map((t) => (
                             <button
                               key={t}
-                              onClick={() => handleChange('template', t)}
-                              className={`px-4 py-2 text-sm capitalize transition-all duration-200 ${
+          onClick={() => handleChange('template', t)}
+          aria-pressed={data.template === t}
+          className={`px-4 py-2 text-sm capitalize transition-all duration-200 ${
                                 data.template === t
                                   ? 'bg-[var(--color-primary)] text-[var(--color-cream)]'
                                   : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border-b border-[var(--color-border)] hover:border-[var(--color-primary)]'
@@ -272,9 +280,10 @@ return (
               <div className="lg:sticky lg:top-24">
                 <motion.div variants={revealVariants} custom={0.3}>
                   <p className="eyebrow text-[var(--color-text-muted)] mb-4">Preview</p>
-                  {previewUrl ? (
-                    <iframe
-                      src={previewUrl}
+    {previewUrl ? (
+          <iframe
+            title="CV Preview"
+            src={previewUrl}
                       className="w-full h-[600px] border border-[var(--color-border-subtle)] bg-white"
                     />
                   ) : (
