@@ -5,6 +5,7 @@ import { useLenis } from './hooks/useLenis'
 import { useSmoothContainer } from './hooks/useSmoothContainer'
 import { revealVariants, staggerContainer } from './hooks/useScrollReveal'
 import { apiUrl } from './lib/api'
+import { ApiConfig } from './components/ApiConfig'
 
 type Language = 'pt' | 'en'
 type Template = 'modern' | 'classic' | 'minimal'
@@ -130,10 +131,11 @@ return (
                 <h1 className="text-lg font-serif font-normal tracking-tight text-[var(--color-cream)]">CV Generator</h1>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="label-mono text-[var(--color-text-muted)]">ATS-friendly</span>
-              <span className="label-mono text-[var(--color-primary)]">PT / EN</span>
-            </div>
+      <div className="flex items-center gap-4">
+        <ApiConfig />
+        <span className="label-mono text-[var(--color-text-muted)]">ATS-friendly</span>
+        <span className="label-mono text-[var(--color-primary)]">PT / EN</span>
+      </div>
           </div>
         </header>
 
