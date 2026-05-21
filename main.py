@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -162,7 +163,11 @@ def generate_pdf(data: CVData):
 async def generate_cv(cv_data: CVData):
     try:
         pdf_bytes = generate_pdf(cv_data)
-        return io.BytesIO(pdf_bytes)
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="CV-{cv_data.name.split()[0]}-{cv_data.language.upper()}.pdf"'},
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

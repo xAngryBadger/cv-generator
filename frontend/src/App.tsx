@@ -6,6 +6,7 @@ import { useSmoothContainer } from './hooks/useSmoothContainer'
 import { revealVariants, staggerContainer } from './hooks/useScrollReveal'
 import { apiUrl } from './lib/api'
 import { ApiConfig } from './components/ApiConfig'
+import { BetaBanner } from './components/BetaBanner'
 
 type Language = 'pt' | 'en'
 type Template = 'modern' | 'classic' | 'minimal'
@@ -94,9 +95,13 @@ function App() {
       link.href = url
       link.download = `CV-${data.name.split(' ')[0]}-${data.language.toUpperCase()}.pdf`
       link.click()
-    } catch (error) {
+  } catch (error) {
+    if (error instanceof Error && error.message === 'NO_API_URL') {
+      alert('Configure a URL da API primeiro. Clique em "Sem API" no header e cole a URL do ngrok.')
+    } else {
       console.error('Error generating PDF:', error)
-      alert('Erro ao gerar PDF. Tente novamente.')
+      alert('Erro ao gerar PDF. Verifique se o backend está online.')
+    }
     } finally {
       setLoading(false)
     }
@@ -114,7 +119,8 @@ return (
         transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]"
       >
-<header className="fixed top-0 left-0 right-0 z-40 fade-border-bottom h-16 flex items-center" style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
+      <BetaBanner />
+      <header className="fixed top-0 left-0 right-0 z-40 fade-border-bottom h-16 flex items-center" style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
       <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <motion.div
