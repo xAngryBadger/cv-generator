@@ -64,6 +64,7 @@ Química Industrial | UFOP | 2022 | Onde Python começou`,
 
 function App() {
   const [showPreloader, setShowPreloader] = useState(true)
+  const [bannerVisible, setBannerVisible] = useState(() => !localStorage.getItem('badger-beta-banner-dismissed'))
   const [data, setData] = useState<CVData>(defaultData)
   const [loading, setLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -121,8 +122,8 @@ return (
         transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]"
       >
-      <BetaBanner colabUrl={COLAB_URL} />
-      <header className="fixed top-0 left-0 right-0 z-40 fade-border-bottom h-16 flex items-center" style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
+      <BetaBanner colabUrl={COLAB_URL} onDismiss={() => setBannerVisible(false)} />
+      <header className={`fixed left-0 right-0 z-40 fade-border-bottom h-16 flex items-center transition-top duration-300 ${bannerVisible ? 'top-[44px]' : 'top-0'}`} style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
       <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <motion.div
