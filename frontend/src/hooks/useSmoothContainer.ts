@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 
 export function useSmoothContainer() {
   const ref = useRef<HTMLDivElement>(null)
@@ -8,25 +8,22 @@ export function useSmoothContainer() {
 
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
-  const animate = useCallback(() => {
-    const el = ref.current
-    if (!el) return
-
-    current.current = lerp(current.current, target.current, 0.12)
-
-    const diff = Math.abs(target.current - current.current)
-    if (diff > 0.5) {
-      el.scrollTop = current.current
-      rafId.current = requestAnimationFrame(animate)
-    } else {
-      el.scrollTop = target.current
-      current.current = target.current
-    }
-  }, [])
-
   useEffect(() => {
     const el = ref.current
     if (!el) return
+
+    const animate = () => {
+      current.current = lerp(current.current, target.current, 0.12)
+
+      const diff = Math.abs(target.current - current.current)
+      if (diff > 0.5) {
+        el.scrollTop = current.current
+        rafId.current = requestAnimationFrame(animate)
+      } else {
+        el.scrollTop = target.current
+        current.current = target.current
+      }
+    }
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
@@ -47,7 +44,7 @@ export function useSmoothContainer() {
       el.removeEventListener('wheel', onWheel)
       cancelAnimationFrame(rafId.current)
     }
-  }, [animate])
+  }, [])
 
   return ref
 }

@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
 """
-Generate 2-page narrative CV PDFs (PT + EN) for Isaac Nathan.
+Generate 2-page layered CV PDFs (PT + EN) for Isaac Nathan — V3.
 
-Source of truth: isaac-portfolio/src/data/content.ts
-This script embeds the data directly since Python can't import TypeScript.
-When content.ts changes, update the corresponding sections below.
+Jake's Resume style: bold hierarchy, scannable, tech-forward.
+Single-column, tight margins, strong section headings,
+skills inline with bold labels, experience with role|date alignment,
+project bullets concise and impact-driven.
 
-Structure:
-  Page 1 — The Gate: Profile narrative, Core Stack, Experience (expanded), Current Education
-  Page 2 — The Depth: Engineering Projects (7, tiered), Skills with Proof, Full Education,
-           Certifications with context, Languages
+Page 1 — The Gate:
+  Name (huge), Objective, Contact, PCD,
+  Technical Skills (inline labels), Profile,
+  Professional Experience, Education
+Page 2 — The Depth:
+  Engineering Projects (tiered), Certifications, Languages
+  Portfolio CTA
+
+Footer: portfolio link on every page
 
 Requirements: reportlab (pip install reportlab)
 Usage: python generate_cv.py
 Output: Isaac-Nathan-CV-PT.pdf, Isaac-Nathan-CV-EN.pdf
 """
 
+from datetime import datetime
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
@@ -24,73 +31,142 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, PageBreak,
     HRFlowable, KeepTogether,
 )
-from reportlab.lib.enums import TA_LEFT, TA_JUSTIFY
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY, TA_RIGHT
+from reportlab.platypus.flowables import Flowable
 import os
 
+PAGE_W, PAGE_H = A4
+
 # ── Colors ──────────────────────────────────────────────────────────────────
-SAGE = HexColor("#456A4B")
-AMBER = HexColor("#8B6914")
-DARK = HexColor("#0D1117")
-MUTED = HexColor("#8B9481")
-BORDER = HexColor("#D4D0C8")
+DARK = HexColor("#1A1A1A")
+ACCENT = HexColor("#456A4B")
+AMBER = HexColor("#7A5C1E")
+MUTED = HexColor("#6B7280")
+BORDER = HexColor("#D1D5DB")
+LIGHT_RULE = HexColor("#E5E7EB")
+
+# ── Helpers ─────────────────────────────────────────────────────────────────
+def _current_semester() -> int:
+    now = datetime.now()
+    year, month = now.year, now.month
+    total = 0
+    for y in range(2024, year + 1):
+        start_m = 2 if y == 2024 else 1
+        end_m = month if y == year else 12
+        for sem_start in [2, 8]:
+            if start_m <= sem_start <= end_m:
+                total += 1
+    return max(total, 1)
+
+SEMESTER = _current_semester()
+ORD_PT = {1: "1º", 2: "2º", 3: "3º", 4: "4º", 5: "5º",
+           6: "6º", 7: "7º", 8: "8º", 9: "9º", 10: "10º"}
+ORD_EN = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 5: "5th",
+           6: "6th", 7: "7th", 8: "8th", 9: "9th", 10: "10th"}
+
+SEMESTER_PT = f"{ORD_PT.get(SEMESTER, f'{SEMESTER}º')} período — cursando"
+SEMESTER_EN = f"{ORD_EN.get(SEMESTER, f'{SEMESTER}th')} semester — in progress"
+
+
+# ── Custom Flowables ────────────────────────────────────────────────────────
+class RoleDateLine(Flowable):
+    """Two-column line: bold role on left, date range on right."""
+    def __init__(self, role, date_range, width=None):
+        Flowable.__init__(self)
+        self.role = role
+        self.date_range = date_range
+        self._width = width or (PAGE_W - 32*mm)
+        self.height = 10
+
+    def wrap(self, availWidth, availHeight):
+        self._width = min(self._width, availWidth)
+        return (self._width, self.height)
+
+    def draw(self):
+        c = self.canv
+        c.setFont("Helvetica-Bold", 8.5)
+        c.setFillColor(DARK)
+        c.drawString(0, 2, self.role)
+        c.setFont("Helvetica", 7.5)
+        c.setFillColor(MUTED)
+        c.drawRightString(self._width, 2, self.date_range)
+
+
+class SubheadLine(Flowable):
+    """Company/location on left, date on right — italic, muted."""
+    def __init__(self, left_text, right_text, width=None):
+        Flowable.__init__(self)
+        self.left_text = left_text
+        self.right_text = right_text
+        self._width = width or (PAGE_W - 32*mm)
+        self.height = 9
+
+    def wrap(self, availWidth, availHeight):
+        self._width = min(self._width, availWidth)
+        return (self._width, self.height)
+
+    def draw(self):
+        c = self.canv
+        c.setFont("Helvetica-Oblique", 7.5)
+        c.setFillColor(AMBER)
+        c.drawString(0, 1, self.left_text)
+        c.setFont("Helvetica", 7)
+        c.setFillColor(MUTED)
+        c.drawRightString(self._width, 1, self.right_text)
+
 
 # ── Styles ──────────────────────────────────────────────────────────────────
 def make_styles() -> dict:
     s = {}
     s["name"] = ParagraphStyle(
-        "Name", fontName="Helvetica-Bold", fontSize=15,
-        leading=18, textColor=DARK, alignment=TA_LEFT,
-        spaceAfter=1*mm,
+        "Name", fontName="Helvetica-Bold", fontSize=22,
+        leading=26, textColor=DARK, alignment=TA_CENTER,
+        spaceAfter=0,
     )
-    s["title"] = ParagraphStyle(
-        "Title", fontName="Helvetica", fontSize=8.5,
-        leading=11, textColor=AMBER, alignment=TA_LEFT,
+    s["title_line"] = ParagraphStyle(
+        "TitleLine", fontName="Helvetica", fontSize=9,
+        leading=11, textColor=ACCENT, alignment=TA_CENTER,
+        spaceAfter=0.5*mm,
+    )
+    s["objective"] = ParagraphStyle(
+        "Objective", fontName="Helvetica-Oblique", fontSize=8,
+        leading=11, textColor=ACCENT, alignment=TA_CENTER,
         spaceAfter=0.5*mm,
     )
     s["contact"] = ParagraphStyle(
-        "Contact", fontName="Helvetica", fontSize=7,
-        leading=9.5, textColor=MUTED, alignment=TA_LEFT,
+        "Contact", fontName="Helvetica", fontSize=7.5,
+        leading=10, textColor=MUTED, alignment=TA_CENTER,
+        spaceAfter=0,
+    )
+    s["pcd"] = ParagraphStyle(
+        "PCD", fontName="Helvetica", fontSize=6.5,
+        leading=8, textColor=MUTED, alignment=TA_CENTER,
         spaceAfter=0,
     )
     s["section_head"] = ParagraphStyle(
-        "SectionHead", fontName="Helvetica-Bold", fontSize=9.5,
-        leading=11.5, textColor=DARK, alignment=TA_LEFT,
-        spaceBefore=2.5*mm, spaceAfter=1*mm,
+        "SectionHead", fontName="Helvetica-Bold", fontSize=10.5,
+        leading=13, textColor=DARK, alignment=TA_LEFT,
+        spaceBefore=4*mm, spaceAfter=0,
     )
     s["body"] = ParagraphStyle(
-        "Body", fontName="Helvetica", fontSize=8,
-        leading=11, textColor=DARK, alignment=TA_JUSTIFY,
-        spaceAfter=0.3*mm,
+        "Body", fontName="Helvetica", fontSize=7.5,
+        leading=10.5, textColor=DARK, alignment=TA_JUSTIFY,
+        spaceAfter=0,
     )
     s["body_small"] = ParagraphStyle(
         "BodySmall", fontName="Helvetica", fontSize=7,
-        leading=9.5, textColor=MUTED, alignment=TA_LEFT,
-        spaceAfter=0.2*mm,
-    )
-    s["bullet"] = ParagraphStyle(
-        "Bullet", fontName="Helvetica", fontSize=8,
-        leading=11, textColor=DARK, alignment=TA_JUSTIFY,
-        leftIndent=8, bulletIndent=0,
-        spaceAfter=0.4*mm,
-    )
-    s["keyword_label"] = ParagraphStyle(
-        "KeywordLabel", fontName="Helvetica-Bold", fontSize=7.5,
-        leading=9.5, textColor=SAGE, alignment=TA_LEFT,
-        spaceAfter=0.2*mm,
-    )
-    s["keyword_items"] = ParagraphStyle(
-        "KeywordItems", fontName="Helvetica", fontSize=7.5,
-        leading=9.5, textColor=DARK, alignment=TA_LEFT,
-        leftIndent=8, spaceAfter=0.6*mm,
-    )
-    s["role"] = ParagraphStyle(
-        "Role", fontName="Helvetica-Bold", fontSize=8.5,
-        leading=11, textColor=DARK, alignment=TA_LEFT,
+        leading=9, textColor=MUTED, alignment=TA_LEFT,
         spaceAfter=0,
     )
-    s["org"] = ParagraphStyle(
-        "Org", fontName="Helvetica", fontSize=7,
-        leading=9, textColor=AMBER, alignment=TA_LEFT,
+    s["bullet"] = ParagraphStyle(
+        "Bullet", fontName="Helvetica", fontSize=7.5,
+        leading=10.5, textColor=DARK, alignment=TA_JUSTIFY,
+        leftIndent=8, bulletIndent=0,
+        spaceAfter=0.5*mm,
+    )
+    s["skills_line"] = ParagraphStyle(
+        "SkillsLine", fontName="Helvetica", fontSize=7.5,
+        leading=10.5, textColor=DARK, alignment=TA_LEFT,
         spaceAfter=0.3*mm,
     )
     s["project_title"] = ParagraphStyle(
@@ -98,13 +174,8 @@ def make_styles() -> dict:
         leading=11, textColor=DARK, alignment=TA_LEFT,
         spaceAfter=0,
     )
-    s["project_url"] = ParagraphStyle(
-        "ProjectUrl", fontName="Helvetica", fontSize=6.5,
-        leading=8.5, textColor=SAGE, alignment=TA_LEFT,
-        spaceAfter=0.1*mm,
-    )
     s["project_tech"] = ParagraphStyle(
-        "ProjectTech", fontName="Helvetica", fontSize=7,
+        "ProjectTech", fontName="Helvetica-Oblique", fontSize=7,
         leading=9, textColor=MUTED, alignment=TA_LEFT,
         spaceAfter=0.2*mm,
     )
@@ -112,22 +183,31 @@ def make_styles() -> dict:
         "CertItem", fontName="Helvetica", fontSize=7.5,
         leading=10, textColor=DARK, alignment=TA_LEFT,
         leftIndent=8, bulletIndent=0,
-        spaceAfter=0.3*mm,
+        spaceAfter=0.2*mm,
     )
     s["cert_context"] = ParagraphStyle(
         "CertContext", fontName="Helvetica-Oblique", fontSize=6.5,
         leading=8.5, textColor=MUTED, alignment=TA_LEFT,
-        leftIndent=8, spaceAfter=0.4*mm,
+        leftIndent=8, spaceAfter=0.3*mm,
     )
-    s["skill_proof"] = ParagraphStyle(
-        "SkillProof", fontName="Helvetica-Oblique", fontSize=7,
+    s["edu_degree"] = ParagraphStyle(
+        "EduDegree", fontName="Helvetica-Bold", fontSize=8.5,
+        leading=10.5, textColor=DARK, alignment=TA_LEFT,
+        spaceAfter=0,
+    )
+    s["edu_detail"] = ParagraphStyle(
+        "EduDetail", fontName="Helvetica", fontSize=7,
         leading=9, textColor=MUTED, alignment=TA_LEFT,
-        leftIndent=8, spaceAfter=0.7*mm,
+        spaceAfter=0.1*mm,
+    )
+    s["footer_link"] = ParagraphStyle(
+        "FooterLink", fontName="Helvetica", fontSize=7,
+        leading=9, textColor=ACCENT, alignment=TA_CENTER,
     )
     return s
 
 
-# ── Data (synced from content.ts) ──────────────────────────────────────────
+# ── Data ────────────────────────────────────────────────────────────────────
 
 PERSONAL = {
     "name": "Isaac Nathan da Silva Barbosa",
@@ -147,69 +227,70 @@ PERSONAL = {
     },
 }
 
-# Narrative profile: keyword lead + trajectory arc
+OBJECTIVE = {
+    "pt": "Construir sistemas inteligentes que conectam IA, cloud e produto — do pipeline agentic ao deploy em produção.",
+    "en": "Build intelligent systems that connect AI, cloud, and product — from agentic pipelines to production deploy.",
+}
+
 PROFILE = {
     "pt": (
-        "Desenvolvedor Full-Stack com IA · Python · FastAPI · React 19 · Azure Cosmos DB · "
-        "GPT-4.1 · Flutter · PyTorch · 10 meses de experiência profissional. "
-        "Primeiro contato com Python em 2022 na UFOP (Química Industrial) — Thonny IDE, sem GPT, "
-        "aulas extras à tarde só para continuar aprendendo. Construí o ForestAI do zero usando "
-        "Stack Overflow e Thonny, anotando manualmente centenas de imagens de drone da Fundação Renova. "
-        "Na Paware, migrei bases de dados para Azure Cosmos DB (Meritage Homes, EUA) e arquitetei "
-        "pipelines de IA para o HelloSocial (Flux, DALL-E 3, Canva Connect). Aprendo resolvendo "
-        "problemas reais — de MIME type cross-platform a agentes ReAct com schema enforcement."
+        "De Química Industrial para Computação: primeiro Python em 2022 (Thonny IDE, sem GPT, "
+        "aulas extras à tarde). Construí o ForestAI do zero anotando manualmente centenas de "
+        "imagens de drone da Fundação Renova. Na Paware, migrei centenas de GB para Azure Cosmos DB "
+        "(Meritage Homes, EUA) e arquitetei pipelines agentic de IA para o HelloSocial "
+        "(GPT-4.1 tool calling, DALL-E 3, Flux). Aprendo resolvendo problemas reais — "
+        "de MIME type cross-platform a agentes ReAct com schema enforcement."
     ),
     "en": (
-        "Full-Stack AI Engineer · Python · FastAPI · React 19 · Azure Cosmos DB · "
-        "GPT-4.1 · Flutter · PyTorch · 10 months of professional experience. "
-        "First Python contact in 2022 at UFOP (Industrial Chemistry) — Thonny IDE, no GPT, "
-        "extra afternoon classes just to keep learning. Built ForestAI from scratch using "
-        "Stack Overflow and Thonny, manually annotating hundreds of drone images from Fundação Renova. "
-        "At Paware, migrated databases to Azure Cosmos DB (Meritage Homes, USA) and architected "
-        "AI pipelines for HelloSocial (Flux, DALL-E 3, Canva Connect). I learn by solving "
-        "real problems — from cross-platform MIME types to ReAct agents with schema enforcement."
+        "From Industrial Chemistry to Computer Engineering: first Python in 2022 (Thonny IDE, no GPT, "
+        "extra afternoon classes). Built ForestAI from scratch, manually annotating hundreds of "
+        "drone images from Fundação Renova. At Paware, migrated hundreds of GB to Azure Cosmos DB "
+        "(Meritage Homes, USA) and architected agentic AI pipelines for HelloSocial "
+        "(GPT-4.1 tool calling, DALL-E 3, Flux). I learn by solving real problems — "
+        "from cross-platform MIME types to ReAct agents with schema enforcement."
     ),
 }
 
-CORE_STACK = {
-    "pt": {
-        "IA / ML": "GPT-4.1 · Azure OpenAI · PyTorch · DeepForest · OpenCV · Ollama · DALL-E 3 · Flux · scikit-learn",
-        "Backend": "Python · FastAPI · Node.js · Express · Azure Cosmos DB · PocketBase · SQL",
-        "Frontend": "React 19 · TypeScript · Flutter · Dart · Tailwind CSS v4 · Vite · React Native (Expo)",
-        "Cloud & Infra": "Azure · Docker · Git / GitHub · Linux (CachyOS/Hyprland) · PyInstaller / Inno Setup",
-        "Integrações": "Mercado Pago PIX · Canva Connect API · Placid API · Templated.io · Pexels API · NVIDIA NIM API",
-        "Outros": "Inglês Fluente · Cibersegurança · Metodologias Ágeis · Testes de API · NiceGUI · Rich CLI",
-    },
-    "en": {
-        "AI / ML": "GPT-4.1 · Azure OpenAI · PyTorch · DeepForest · OpenCV · Ollama · DALL-E 3 · Flux · scikit-learn",
-        "Backend": "Python · FastAPI · Node.js · Express · Azure Cosmos DB · PocketBase · SQL",
-        "Frontend": "React 19 · TypeScript · Flutter · Dart · Tailwind CSS v4 · Vite · React Native (Expo)",
-        "Cloud & Infra": "Azure · Docker · Git / GitHub · Linux (CachyOS/Hyprland) · PyInstaller / Inno Setup",
-        "Integrations": "Mercado Pago PIX · Canva Connect API · Placid API · Templated.io · Pexels API · NVIDIA NIM API",
-        "Other": "Fluent English · Cybersecurity · Agile Methodologies · API Testing · NiceGUI · Rich CLI",
-    },
+SKILLS = {
+    "pt": [
+        ("IA / ML", "GPT-4.1 · Azure OpenAI · PyTorch · DeepForest · OpenCV · Ollama · DALL-E 3 · Flux · Sora · Veo 3.1 · Gemini SDK · scikit-learn"),
+        ("Backend", "Python · FastAPI · Node.js · Express · Java · Azure Cosmos DB · PocketBase · SQL"),
+        ("Frontend", "React 19 · TypeScript · JavaScript · Flutter · Tailwind CSS v4 · Vite · React Native (Expo 54)"),
+        ("Cloud & Infra", "Azure · Docker · Git / GitHub · PocketBase · Linux (CachyOS/Hyprland) · PyInstaller / Inno Setup"),
+        ("Integrações", "Mercado Pago PIX · Canva Connect API · Placid API · Templated.io · Pexels API · NVIDIA NIM API"),
+        ("Outros", "Inglês Fluente · Cibersegurança · Metodologias Ágeis · Testes de API · NiceGUI · Rich CLI · xlwings/COM"),
+    ],
+    "en": [
+        ("AI / ML", "GPT-4.1 · Azure OpenAI · PyTorch · DeepForest · OpenCV · Ollama · DALL-E 3 · Flux · Sora · Veo 3.1 · Gemini SDK · scikit-learn"),
+        ("Backend", "Python · FastAPI · Node.js · Express · Java · Azure Cosmos DB · PocketBase · SQL"),
+        ("Frontend", "React 19 · TypeScript · JavaScript · Flutter · Tailwind CSS v4 · Vite · React Native (Expo 54)"),
+        ("Cloud & Infra", "Azure · Docker · Git / GitHub · PocketBase · Linux (CachyOS/Hyprland) · PyInstaller / Inno Setup"),
+        ("Integrations", "Mercado Pago PIX · Canva Connect API · Placid API · Templated.io · Pexels API · NVIDIA NIM API"),
+        ("Other", "Fluent English · Cybersecurity · Agile Methodologies · API Testing · NiceGUI · Rich CLI · xlwings/COM"),
+    ],
 }
 
-# Expanded narrative experience bullets (2-3 sentences each)
 EXPERIENCE = {
     "pt": [
         {
             "company": "Paware Softwares",
             "role": "Desenvolvedor Full-Stack com foco em IA",
             "period": "Out 2025 — Mai 2026",
+            "location": "Remoto",
             "bullets": [
-                "Migrei datasets legados do Google Drive para Azure Cosmos DB destinados à Meritage Homes (EUA) — pipeline com extração automatizada por cookies, compressão, renomeação e injeção em painéis para embedding via agente WhatsApp com limites rígidos de tamanho de arquivo. Containerizei com Docker para ambientes reproduzíveis e escrevi camada de validação de schema com rollback automático.",
-                "Resolvi problema cross-platform de MIME types (Android nativo vs iPhone exigindo octet-stream — testei no iPhone dos meus pais, sem Macbook). Essa validação virou o backbone da migração final para Azure Cosmos DB.",
-                "Arquitetei pipeline agentic de geração de imagens para o HelloSocial — agente GPT-4.1 com tool calling, até 10 iterações de raciocínio, integração Flux Kontext Pro + DALL-E 3 + Placid/Canva. Fallback SQLite/PIL local quando API paga não era necessária.",
+                "Migrei centenas de GB de datasets legados do Google Drive para Azure Cosmos DB (Meritage Homes, EUA) — pipeline com extração automatizada, compressão e injeção em painéis para agente WhatsApp. Docker + validação de schema com rollback automático.",
+                "Resolvi problema cross-platform de MIME types (Android vs iOS) — validação que virou o backbone da migração Cosmos DB, com testes extensivos em dispositivos iOS.",
+                "Arquitetei pipeline agentic de geração de imagens para o HelloSocial — agente GPT-4.1 com tool calling (até 10 iterações), Flux Kontext Pro + DALL-E 3 + Placid/Canva, fallback SQLite/PIL local.",
             ],
         },
         {
             "company": "SuperNerds",
             "role": "Instrutor de Robótica",
             "period": "Set 2025 — Out 2025",
+            "location": "Mariana, MG",
             "bullets": [
-                "Aprendi Arduino e LEGO em <2 semanas e ministrei aulas de robótica para crianças/adolescentes, conectando teoria a aplicações reais.",
-                "Conciliei manhãs aqui com trabalho noturno na Paware.",
+                "Aprendi Arduino e LEGO em <2 semanas e ministrei aulas de robótica para crianças/adolescentes.",
+                "Conciliei manhãs aqui com trabalho noturno na Paware — disciplina e adaptabilidade.",
             ],
         },
     ],
@@ -218,37 +299,37 @@ EXPERIENCE = {
             "company": "Paware Softwares",
             "role": "Full-Stack Developer with AI focus",
             "period": "Oct 2025 — May 2026",
+            "location": "Remote",
             "bullets": [
-                "Migrated legacy datasets from Google Drive to Azure Cosmos DB for Meritage Homes (USA) — pipeline with automated cookie-based extraction, compression, renaming, and injection into panels for WhatsApp agent embedding with strict file size limits. Containerized with Docker for reproducible environments and wrote schema validation layer with automated rollback.",
-                "Resolved cross-platform MIME type issue (Android native vs iPhone requiring octet-stream — tested on my parents' iPhone, no Macbook). This validation layer became the backbone of the final Azure Cosmos DB migration.",
-                "Architected agentic image-generation pipeline for HelloSocial — GPT-4.1 agent with tool calling, up to 10 reasoning iterations, integrating Flux Kontext Pro + DALL-E 3 + Placid/Canva APIs. Fallback to SQLite/local PIL when paid APIs weren't needed.",
+                "Migrated hundreds of GB of legacy datasets from Google Drive to Azure Cosmos DB (Meritage Homes, USA) — automated extraction, compression, injection into panels for WhatsApp agent. Docker + schema validation with auto-rollback.",
+                "Resolved cross-platform MIME type issue (Android vs iOS) — validation layer that became the backbone of the Cosmos DB migration, with extensive testing on iOS devices.",
+                "Architected agentic image-generation pipeline for HelloSocial — GPT-4.1 agent with tool calling (up to 10 iterations), Flux Kontext Pro + DALL-E 3 + Placid/Canva, local SQLite/PIL fallback.",
             ],
         },
         {
             "company": "SuperNerds",
             "role": "Robotics Instructor",
             "period": "Sep 2025 — Oct 2025",
+            "location": "Mariana, MG",
             "bullets": [
-                "Learned Arduino and LEGO in under 2 weeks and taught robotics to children/teens, connecting theory to real applications.",
-                "Balanced mornings here with evening work at Paware.",
+                "Learned Arduino and LEGO in under 2 weeks and taught robotics to children/teens.",
+                "Balanced mornings here with evening work at Paware — discipline and adaptability.",
             ],
         },
     ],
 }
 
-# Engineering Projects — tiered depth
 PROJECTS = {
     "pt": [
         {
             "name": "HarpIA",
             "url": "github.com/xAngryBadger/harpia",
-            "tech": "Python · GPT-4.1 · DALL-E 3 · Flux 2.0 Pro · Sora · Veo 3.1 · Azure Cosmos DB · SQLite · PIL",
+            "tech": "Python · GPT-4.1 · DALL-E 3 · Flux 2.0 Pro · Sora · Veo 3.1 · Gemini SDK · Azure Cosmos DB · SQLite · PIL",
             "tier": 1,
             "bullets": [
-                "Motor de automação criativa com 7+ modelos de IA. Pipeline agentic autônomo: GPT-4.1 orquestra tool calls (geração de imagem, busca Pexels, copywriting, composição de design) com schema enforcement e até 10 iterações de raciocínio (think → call → observe).",
-                "Stack leve por padrão: SQLite + PIL local renderizam designs com 8 templates próprios, brand colors e badge overlays; quando necessário, faz fallback para APIs pagas (DALL-E 3, Flux, Sora, Veo 3.1).",
-                "Swap de backend: local SQLite para desenvolvimento, Azure Cosmos DB + Blob Storage para produção, toggle via variável de ambiente. Cron-ready com file-locking e recovery de batches órfãos.",
-                "6.930+ LOC de Python async com testes de segurança e zero hardcoded secrets.",
+                "Motor de automação criativa com 7+ modelos de IA — pipeline agentic autônomo: GPT-4.1 orquestra tool calls (geração de imagem, busca Pexels, copywriting, composição) com schema enforcement e até 10 iterações (think → call → observe).",
+                "Stack leve por padrão: SQLite + PIL local com 8 templates próprios; fallback para APIs pagas (DALL-E 3, Flux, Sora, Veo 3.1) quando necessário.",
+                "Backend swap via env var: SQLite local ↔ Azure Cosmos DB + Blob Storage. Cron-ready com file-locking e recovery de batches órfãos. 6.930+ LOC async Python, zero hardcoded secrets.",
             ],
         },
         {
@@ -257,9 +338,8 @@ PROJECTS = {
             "tech": "Flutter · Dart · Drift/SQLite · React · PocketBase · TypeScript",
             "tier": 1,
             "bullets": [
-                "App Flutter offline-first para inventário florestal com motor de sincronização custom: detecção de conflitos por timestamp, UUID remapping em cascata pela FK chain (Propriedade → UT → Parcela → Planta → Foto) e rollback atômico via transações Drift.",
-                "~24K LOC — arquitetura e lógica de sync construídas do zero; código gerado com apoio de LLM (web) e revisado manualmente. Hierarquia 5-tier com exportação XLSX/PDF/CSV.",
-                "Painel admin React com auth, fotos, relatórios e exportação. Backoff exponencial com jitter, auth retry wrapper, bypass ngrok para desenvolvimento.",
+                "App Flutter offline-first para inventário florestal — motor de sync custom: UUID remapping em cascata pela FK chain (Propriedade → UT → Parcela → Planta → Foto) e rollback atômico via Drift. ~24K LOC, arquitetura de sync construída do zero.",
+                "Painel admin React com auth, fotos, relatórios e exportação XLSX/PDF/CSV. Backoff exponencial com jitter, auth retry wrapper com refresh em 401s.",
             ],
         },
         {
@@ -268,8 +348,7 @@ PROJECTS = {
             "tech": "PyTorch · DeepForest · OpenCV · scikit-learn · TensorBoard",
             "tier": 1,
             "bullets": [
-                "Detecção e classificação de espécies florestais com Deep Learning — construído do zero sem IA-assisted coding. Stack Overflow + Thonny IDE apenas.",
-                "Anotação manual de centenas de imagens de drone da Fundação Renova (bounding boxes), treinamento DeepForest/YOLO em GPU local, splits estratificadas. Interpretação de curvas no TensorBoard — detectando memorização vs generalização. O jeito difícil construiu a intuição que fez cada framework subsequente clicar mais rápido.",
+                "Detecção de espécies florestais com Deep Learning — construído do zero sem IA-assisted coding. Anotação manual de centenas de imagens de drone (Fundação Renova), treinamento DeepForest/YOLO em GPU local, splits estratificadas, TensorBoard para detectar memorização vs generalização.",
             ],
         },
         {
@@ -278,9 +357,7 @@ PROJECTS = {
             "tech": "Python · Ollama/qwen2.5 · CustomTkinter · xlwings/COM · PyInstaller · Inno Setup",
             "tier": 1,
             "bullets": [
-                "Assistente de IA local para Excel via agente ReAct (Ollama/qwen2.5). Comando em linguagem natural para filtrar, ordenar, renomear abas e manipular planilhas com checkpoint automático antes de cada alteração.",
-                "6+ integrações OAuth (Gmail, Teams, Calendar, Drive, Outlook, Trello) com confirmação do usuário antes de modificações.",
-                "Design visual feito à mão com paleta pastel e mascote original (Fennec). Instalador nativo Windows (Inno Setup + PyInstaller). Interface bilíngue PT/EN.",
+                "Assistente de IA local para Excel via agente ReAct (Ollama/qwen2.5) — linguagem natural para filtrar/ordenar/manipular planilhas com checkpoint automático. 6+ integrações OAuth (Gmail, Teams, Calendar, Drive, Outlook, Trello). Instalador Windows nativo.",
             ],
         },
         {
@@ -289,8 +366,16 @@ PROJECTS = {
             "tech": "Python · pandas · openpyxl · NiceGUI · Rich CLI · unittest",
             "tier": 2,
             "bullets": [
-                "Motor de planejamento operacional para restauração florestal em larga escala — geração automática de dossiês executivos com alocação de equipes, territórios e cronogramas.",
-                "Gerenciamento de tarifas e custos operacionais. Interface NiceGUI + CLI Rich com suite de testes unitários.",
+                "Motor de planejamento para restauração florestal — dossiês executivos automáticos com alocação de equipes, territórios e cronogramas. NiceGUI + CLI Rich.",
+            ],
+        },
+        {
+            "name": "Inovesa Florestal",
+            "url": None,
+            "tech": "React 19 · Motion · Lenis · Tailwind CSS v4 · TypeScript · Vite 6",
+            "tier": 2,
+            "bullets": [
+                "Site premium para empresa florestal — parallax, scroll suave, ouvidoria multi-step, transições cinematográficas. Motion system reutilizável (7 variantes, 3 springs). prefers-reduced-motion.",
             ],
         },
         {
@@ -299,16 +384,16 @@ PROJECTS = {
             "tech": "Node.js · mineflayer · NVIDIA NIM API · Reinforcement Learning · pathfinder",
             "tier": 2,
             "bullets": [
-                "Bot de Minecraft com comandos em linguagem natural via LLM (NVIDIA NIM API) — minerar, construir, seguir, navegar e interagir pelo chat. Módulo de reinforcement learning para comportamento autônomo.",
+                "Bot Minecraft com comandos em linguagem natural via LLM — minerar, craftar, navegar. Módulo de reinforcement learning para comportamento autônomo.",
             ],
         },
         {
             "name": "HelloSocial",
             "url": None,
             "tech": "Python · FastAPI · Azure OpenAI · Flux · Canva Connect · React · TypeScript",
-            "tier": 3,
+            "tier": 2,
             "bullets": [
-                "Plataforma de criação e agendamento de posts com IA — projeto na Paware que inspirou o HarpIA. Pipeline de geração de imagens com Flux Kontext Pro e DALL-E 3, agentes de copy e template.",
+                "Plataforma de posts com IA — projeto na Paware que inspirou o HarpIA. Pipeline de geração de imagens com Flux Kontext Pro e DALL-E 3.",
             ],
         },
     ],
@@ -316,13 +401,12 @@ PROJECTS = {
         {
             "name": "HarpIA",
             "url": "github.com/xAngryBadger/harpia",
-            "tech": "Python · GPT-4.1 · DALL-E 3 · Flux 2.0 Pro · Sora · Veo 3.1 · Azure Cosmos DB · SQLite · PIL",
+            "tech": "Python · GPT-4.1 · DALL-E 3 · Flux 2.0 Pro · Sora · Veo 3.1 · Gemini SDK · Azure Cosmos DB · SQLite · PIL",
             "tier": 1,
             "bullets": [
-                "Creative automation engine with 7+ AI models. Autonomous agentic pipeline: GPT-4.1 orchestrates tool calls (image generation, Pexels search, copywriting, design compositing) with schema enforcement and up to 10 reasoning iterations (think → call → observe).",
-                "Lightweight stack by default: SQLite + local PIL renders designs with 8 custom templates, brand colors, and badge overlays; falls back to paid APIs when needed (DALL-E 3, Flux, Sora, Veo 3.1).",
-                "Backend swap: local SQLite for development, Azure Cosmos DB + Blob Storage for production, toggled via environment variable. Cron-ready with file-locking and stuck batch recovery.",
-                "6,930+ LOC async Python with security tests and zero hardcoded secrets.",
+                "Creative automation engine with 7+ AI models — autonomous agentic pipeline: GPT-4.1 orchestrates tool calls (image generation, Pexels search, copywriting, compositing) with schema enforcement, up to 10 reasoning iterations (think → call → observe).",
+                "Lightweight stack by default: SQLite + local PIL with 8 custom templates; falls back to paid APIs (DALL-E 3, Flux, Sora, Veo 3.1) when needed.",
+                "Backend swap via env var: local SQLite ↔ Azure Cosmos DB + Blob Storage. Cron-ready with file-locking and stuck batch recovery. 6,930+ LOC async Python, zero hardcoded secrets.",
             ],
         },
         {
@@ -331,9 +415,8 @@ PROJECTS = {
             "tech": "Flutter · Dart · Drift/SQLite · React · PocketBase · TypeScript",
             "tier": 1,
             "bullets": [
-                "Flutter offline-first app for forest inventory with custom sync engine: timestamp-based conflict detection, cascading UUID remapping through FK chain (Propriedade → UT → Parcela → Planta → Foto), and atomic rollback via Drift transactions.",
-                "~24K LOC — architecture and sync logic built from scratch; code generated with LLM assistance (web) and manually reviewed. 5-tier hierarchy with XLSX/PDF/CSV export.",
-                "React admin panel with auth, photos, reports, and export. Exponential backoff with jitter, auth retry wrapper, ngrok bypass for development.",
+                "Flutter offline-first forest inventory app — custom sync engine: cascading UUID remapping through FK chain (Propriedade → UT → Parcela → Planta → Foto), atomic rollback via Drift. ~24K LOC, sync architecture built from scratch.",
+                "React admin panel with auth, photos, reports, XLSX/PDF/CSV export. Exponential backoff with jitter, auth retry with transparent 401 refresh.",
             ],
         },
         {
@@ -342,8 +425,7 @@ PROJECTS = {
             "tech": "PyTorch · DeepForest · OpenCV · scikit-learn · TensorBoard",
             "tier": 1,
             "bullets": [
-                "Forest species detection and classification with Deep Learning — built from scratch without AI-assisted coding. Stack Overflow + Thonny IDE only.",
-                "Manual annotation of hundreds of drone images from Fundação Renova (bounding boxes), DeepForest/YOLO training on local GPU, stratified splits. TensorBoard curve interpretation — detecting memorization vs generalization. The hard way built the intuition that made every subsequent framework click faster.",
+                "Forest species detection with Deep Learning — built from scratch without AI-assisted coding. Manual annotation of hundreds of drone images (Fundação Renova), DeepForest/YOLO training on local GPU, stratified splits, TensorBoard for memorization vs generalization analysis.",
             ],
         },
         {
@@ -352,9 +434,7 @@ PROJECTS = {
             "tech": "Python · Ollama/qwen2.5 · CustomTkinter · xlwings/COM · PyInstaller · Inno Setup",
             "tier": 1,
             "bullets": [
-                "Local AI assistant for Excel via ReAct agent (Ollama/qwen2.5). Natural language commands to filter, sort, rename sheets, and manipulate spreadsheets with auto-checkpoint before every change.",
-                "6+ OAuth integrations (Gmail, Teams, Calendar, Drive, Outlook, Trello) with user confirmation before modifications.",
-                "Hand-crafted visual design with pastel palette and original mascot (Fennec). Native Windows installer (Inno Setup + PyInstaller). Bilingual PT/EN interface.",
+                "Local AI assistant for Excel via ReAct agent (Ollama/qwen2.5) — natural language to filter/sort/manipulate spreadsheets with auto-checkpoint. 6+ OAuth integrations (Gmail, Teams, Calendar, Drive, Outlook, Trello). Native Windows installer.",
             ],
         },
         {
@@ -363,8 +443,16 @@ PROJECTS = {
             "tech": "Python · pandas · openpyxl · NiceGUI · Rich CLI · unittest",
             "tier": 2,
             "bullets": [
-                "Operational planning engine for large-scale forest restoration — automatic generation of executive dossiers with crew allocation, territory mapping, and schedule management.",
-                "Tariff and operational cost management. NiceGUI + Rich CLI interface with unit test suite.",
+                "Planning engine for forest restoration — automatic executive dossiers with crew allocation, territories, and schedules. NiceGUI + Rich CLI.",
+            ],
+        },
+        {
+            "name": "Inovesa Florestal",
+            "url": None,
+            "tech": "React 19 · Motion · Lenis · Tailwind CSS v4 · TypeScript · Vite 6",
+            "tier": 2,
+            "bullets": [
+                "Premium website for forestry company — parallax, smooth scroll, multi-step ombudsman, cinematic transitions. Reusable motion system (7 variants, 3 springs). prefers-reduced-motion.",
             ],
         },
         {
@@ -373,75 +461,17 @@ PROJECTS = {
             "tech": "Node.js · mineflayer · NVIDIA NIM API · Reinforcement Learning · pathfinder",
             "tier": 2,
             "bullets": [
-                "Minecraft bot with natural language commands via LLM (NVIDIA NIM API) — mine, craft, follow, navigate, and interact through chat. Reinforcement learning module for autonomous behavior.",
+                "Minecraft bot with natural language commands via LLM — mine, craft, navigate. Reinforcement learning module for autonomous behavior.",
             ],
         },
         {
             "name": "HelloSocial",
             "url": None,
             "tech": "Python · FastAPI · Azure OpenAI · Flux · Canva Connect · React · TypeScript",
-            "tier": 3,
+            "tier": 2,
             "bullets": [
-                "AI-powered social media post creation and scheduling platform — project at Paware that inspired HarpIA. Image generation pipeline with Flux Kontext Pro and DALL-E 3, copy and template agents.",
+                "AI-powered social media platform — project at Paware that inspired HarpIA. Image generation pipeline with Flux Kontext Pro and DALL-E 3.",
             ],
-        },
-    ],
-}
-
-# Skills with proof — connects each category to real projects
-SKILLS_PROOF = {
-    "pt": [
-        {
-            "label": "Frontend",
-            "items": "React 19 · TypeScript · Flutter · Tailwind CSS v4 · Vite · React Native",
-            "proof": "→ HarpIA frontend, Flora Sensus admin panel, Inovesa site institucional, este portfólio.",
-        },
-        {
-            "label": "Backend",
-            "items": "Python · FastAPI · Node.js · Express · Azure Cosmos DB · SQL",
-            "proof": "→ HarpIA pipeline, AguaQuality IoT backend, HelloSocial (Paware). Python async como linguagem de produção.",
-        },
-        {
-            "label": "Cloud & Infra",
-            "items": "Azure · Docker · Git/GitHub · PocketBase · Linux (CachyOS/Hyprland)",
-            "proof": "→ Migração para Azure Cosmos DB (Meritage Homes, EUA). Docker para agentes de IA. PocketBase como backend Flora Sensus.",
-        },
-        {
-            "label": "IA / ML",
-            "items": "GPT-4.1 · PyTorch · DeepForest · OpenCV · Ollama · DALL-E 3 · Flux · scikit-learn",
-            "proof": "→ 7+ modelos de IA integrados no HarpIA. Agente ReAct com Ollama no Fennec. Detecção de espécies com PyTorch + DeepForest no ForestAI.",
-        },
-        {
-            "label": "Integrações",
-            "items": "Mercado Pago PIX · Canva Connect · Placid API · Pexels API · NVIDIA NIM",
-            "proof": "→ PIX via Mercado Pago (AguaQuality). Canva + Placid (HelloSocial/Paware). Pexels (HarpIA).",
-        },
-    ],
-    "en": [
-        {
-            "label": "Frontend",
-            "items": "React 19 · TypeScript · Flutter · Tailwind CSS v4 · Vite · React Native",
-            "proof": "→ HarpIA frontend, Flora Sensus admin panel, Inovesa institutional site, this portfolio.",
-        },
-        {
-            "label": "Backend",
-            "items": "Python · FastAPI · Node.js · Express · Azure Cosmos DB · SQL",
-            "proof": "→ HarpIA pipeline, AguaQuality IoT backend, HelloSocial (Paware). Python async as production language.",
-        },
-        {
-            "label": "Cloud & Infra",
-            "items": "Azure · Docker · Git/GitHub · PocketBase · Linux (CachyOS/Hyprland)",
-            "proof": "→ Database migration to Azure Cosmos DB (Meritage Homes, USA). Docker for AI agents. PocketBase as Flora Sensus backend.",
-        },
-        {
-            "label": "AI / ML",
-            "items": "GPT-4.1 · PyTorch · DeepForest · OpenCV · Ollama · DALL-E 3 · Flux · scikit-learn",
-            "proof": "→ 7+ AI models integrated in HarpIA. ReAct agent with Ollama in Fennec. Species detection with PyTorch + DeepForest in ForestAI.",
-        },
-        {
-            "label": "Integrations",
-            "items": "Mercado Pago PIX · Canva Connect · Placid API · Pexels API · NVIDIA NIM",
-            "proof": "→ PIX via Mercado Pago (AguaQuality). Canva + Placid (HelloSocial/Paware). Pexels (HarpIA).",
         },
     ],
 }
@@ -452,21 +482,21 @@ EDUCATION = {
             "degree": "Engenharia de Computação",
             "institution": "Cruzeiro do Sul",
             "period": "2024 — 2029",
-            "status": "5º período — em andamento",
+            "status": SEMESTER_PT,
             "active": True,
         },
         {
             "degree": "Engenharia Química",
             "institution": "UFSJ — Campus Alto Paraopeba",
             "period": "2022 — 2024",
-            "status": "Período de transição — longe do código, acompanhando IA de perto",
+            "status": "Transição — estudo autodirigido em IA",
             "active": False,
         },
         {
             "degree": "Química Industrial",
             "institution": "UFOP",
             "period": "2022",
-            "status": "Onde Python começou — Thonny IDE, sem GPT",
+            "status": "Onde Python começou — Thonny IDE",
             "active": False,
         },
     ],
@@ -475,21 +505,21 @@ EDUCATION = {
             "degree": "Computer Engineering",
             "institution": "Cruzeiro do Sul",
             "period": "2024 — 2029",
-            "status": "5th semester — in progress",
+            "status": SEMESTER_EN,
             "active": True,
         },
         {
             "degree": "Chemical Engineering",
             "institution": "UFSJ — Campus Alto Paraopeba",
             "period": "2022 — 2024",
-            "status": "Pivot period — away from code, watching AI closely",
+            "status": "Transition — self-directed AI study",
             "active": False,
         },
         {
             "degree": "Industrial Chemistry",
             "institution": "UFOP",
             "period": "2022",
-            "status": "Where Python began — Thonny IDE, no GPT",
+            "status": "Where Python began — Thonny IDE",
             "active": False,
         },
     ],
@@ -497,33 +527,53 @@ EDUCATION = {
 
 CERTIFICATIONS = {
     "pt": [
-        {"name": "Python Essentials 1", "issuer": "Cisco Networking Academy", "context": "Fundamentos de programação com Python — lógica, estruturas e primeiros scripts."},
-        {"name": "Python Essentials 2", "issuer": "Cisco Networking Academy", "context": "Python avançado — orientação a objetos, bibliotecas e preparação para certificação."},
-        {"name": "Data Science Essentials with Python", "issuer": "Cisco Networking Academy", "context": "Análise de dados com Pandas e Matplotlib — aprendizado prático e baseado em projetos."},
-        {"name": "Data Analytics Essentials", "issuer": "Cisco Networking Academy", "context": "Ferramentas essenciais de analytics reconhecidas pelo mercado."},
-        {"name": "Networking Basics", "issuer": "Cisco Networking Academy (120h)", "context": "Concluído durante Engenharia de Computação na Cruzeiro do Sul."},
-        {"name": "Introdução à Cibersegurança", "issuer": "Cisco Networking Academy", "context": "Base em segurança de redes e ameaças cibernéticas."},
-        {"name": "IA para Otimização de Processos e Tomada de Decisão", "issuer": "Escola Virtual Gov · Enap · Serpro (71h)", "context": "Programa do Núcleo de IA do Governo (PBIA) — uso estratégico de IA na gestão pública e segurança da informação."},
-        {"name": "Segurança em TI", "issuer": "Fundação Bradesco", "context": "Complemento em proteção de infraestrutura e dados corporativos."},
-        {"name": "Inglês Fluente", "issuer": "KUMON (3 anos)", "context": "Habilitação para documentação técnica e reuniões com equipes internacionais."},
+        {"name": "Python Essentials 1 & 2", "issuer": "Cisco Networking Academy", "context": "Fundamentos + Python avançado (OOP, bibliotecas, cert prep)."},
+        {"name": "Data Science Essentials with Python", "issuer": "Cisco Networking Academy", "context": "Pandas, Matplotlib — aprendizado prático baseado em projetos."},
+        {"name": "Data Analytics Essentials", "issuer": "Cisco Networking Academy", "context": "Ferramentas de analytics reconhecidas pelo mercado."},
+        {"name": "IA para Otimização de Processos", "issuer": "Escola Virtual Gov · Enap · Serpro (71h)", "context": "Núcleo de IA do Governo (PBIA) — IA na gestão pública e segurança da informação."},
+        {"name": "Networking Basics (120h)", "issuer": "Cisco Networking Academy", "context": "Concluído durante Engenharia de Computação."},
+        {"name": "Introdução à Cibersegurança", "issuer": "Cisco Networking Academy", "context": "Segurança de redes e ameaças cibernéticas."},
+        {"name": "Segurança em TI", "issuer": "Fundação Bradesco", "context": "Proteção de infraestrutura e dados corporativos."},
+        {"name": "Inglês Fluente (3 anos)", "issuer": "KUMON", "context": "Documentação técnica e reuniões com equipes internacionais."},
     ],
     "en": [
-        {"name": "Python Essentials 1", "issuer": "Cisco Networking Academy", "context": "Programming fundamentals with Python — logic, structures, and first scripts."},
-        {"name": "Python Essentials 2", "issuer": "Cisco Networking Academy", "context": "Advanced Python — OOP, libraries, and certification prep."},
-        {"name": "Data Science Essentials with Python", "issuer": "Cisco Networking Academy", "context": "Data analysis with Pandas and Matplotlib — hands-on, project-based learning."},
-        {"name": "Data Analytics Essentials", "issuer": "Cisco Networking Academy", "context": "Essential analytics tools recognized by the industry."},
-        {"name": "Networking Basics", "issuer": "Cisco Networking Academy (120h)", "context": "Completed during Computer Engineering at Cruzeiro do Sul."},
-        {"name": "Intro to Cybersecurity", "issuer": "Cisco Networking Academy", "context": "Foundation in network security and cyber threats."},
-        {"name": "AI for Process Optimization & Decision-Making", "issuer": "Escola Virtual Gov · Enap · Serpro (71h)", "context": "Program by the Gov AI Nucleus (PBIA) — strategic use of AI in public management and information security."},
-        {"name": "IT Security", "issuer": "Bradesco Foundation", "context": "Complement in corporate infrastructure and data protection."},
-        {"name": "Fluent English", "issuer": "KUMON (3 years)", "context": "Enables technical documentation and meetings with international teams."},
+        {"name": "Python Essentials 1 & 2", "issuer": "Cisco Networking Academy", "context": "Fundamentals + advanced Python (OOP, libraries, cert prep)."},
+        {"name": "Data Science Essentials with Python", "issuer": "Cisco Networking Academy", "context": "Pandas, Matplotlib — hands-on project-based learning."},
+        {"name": "Data Analytics Essentials", "issuer": "Cisco Networking Academy", "context": "Industry-recognized analytics tools."},
+        {"name": "AI for Process Optimization", "issuer": "Escola Virtual Gov · Enap · Serpro (71h)", "context": "Gov AI Nucleus (PBIA) — strategic AI in public management and infosec."},
+        {"name": "Networking Basics (120h)", "issuer": "Cisco Networking Academy", "context": "Completed during Computer Engineering."},
+        {"name": "Intro to Cybersecurity", "issuer": "Cisco Networking Academy", "context": "Network security and cyber threats."},
+        {"name": "IT Security", "issuer": "Bradesco Foundation", "context": "Corporate infrastructure and data protection."},
+        {"name": "Fluent English (3 years)", "issuer": "KUMON", "context": "Technical documentation and meetings with international teams."},
     ],
 }
 
 LANGUAGES = {
-    "pt": ["Português — Nativo", "Inglês — Fluente (KUMON, 3 anos)"],
-    "en": ["Portuguese — Native", "English — Fluent (KUMON, 3 years)"],
+    "pt": "Português — Nativo · Inglês — Fluente (KUMON, 3 anos)",
+    "en": "Portuguese — Native · English — Fluent (KUMON, 3 years)",
 }
+
+
+# ── Page footer ─────────────────────────────────────────────────────────────
+def _footer(canvas, doc):
+    canvas.saveState()
+    portfolio_url = PERSONAL["portfolio"]
+    page_num = canvas.getPageNumber()
+    footer_y = 7 * mm
+
+    canvas.setFont("Helvetica", 6)
+    canvas.setFillColor(MUTED)
+
+    line = f"Portfolio & case studies → {portfolio_url}"
+    if page_num > 1:
+        line += f"  ·  Página {page_num}" if doc.lang == "pt" else f"  ·  Page {page_num}"
+    canvas.drawCentredString(PAGE_W / 2, footer_y, line)
+
+    canvas.setStrokeColor(LIGHT_RULE)
+    canvas.setLineWidth(0.3)
+    canvas.line(doc.leftMargin, footer_y + 2.5*mm, PAGE_W - doc.rightMargin, footer_y + 2.5*mm)
+
+    canvas.restoreState()
 
 
 # ── PDF Builder ─────────────────────────────────────────────────────────────
@@ -535,125 +585,137 @@ def build_pdf(lang: str, output_path: str):
     def s(key: str) -> ParagraphStyle:
         return styles[key]
 
-    def heading(text: str):
+    def section_heading(text: str):
+        story.append(Spacer(1, 0.5*mm))
         story.append(Paragraph(text.upper(), s("section_head")))
         story.append(HRFlowable(
-            width="100%", thickness=0.5, color=BORDER,
-            spaceBefore=0, spaceAfter=2*mm,
+            width="100%", thickness=0.8, color=DARK,
+            spaceBefore=0.5*mm, spaceAfter=2*mm,
         ))
 
     def bullet(text: str):
         story.append(Paragraph(f"<bullet>&bull;</bullet> {text}", s("bullet")))
 
-    # ── PAGE 1: THE GATE ────────────────────────────────────────────────────
+    content_width = PAGE_W - 32*mm
 
-    # Name
+    # ══════════════════════════════════════════════════════════════════════
+    # PAGE 1 — THE GATE
+    # ══════════════════════════════════════════════════════════════════════
+
+    # Name — huge, centered
     story.append(Paragraph(PERSONAL["name"], s("name")))
 
-    # Title
+    # Title line — centered
     story.append(Paragraph(
         f'{PERSONAL["title"][lang]} · {PERSONAL["subtitle"][lang]}',
-        s("title"),
+        s("title_line"),
     ))
 
-    # PCD
+    # Objective — centered, italic, green
+    story.append(Paragraph(OBJECTIVE[lang], s("objective")))
+
+    # PCD — centered, small
     pcd_text = ("PCD — TEA (CID-11: 6A02.2) + TDAH (CID-11: 6A05.2)"
                 if lang == "pt" else
                 "PWD — ASD (ICD-11: 6A02.2) + ADHD (ICD-11: 6A05.2)")
-    story.append(Paragraph(pcd_text, s("body_small")))
+    story.append(Paragraph(pcd_text, s("pcd")))
 
-    # Contact line
+    # Contact — centered, inline
     contact_parts = [
         PERSONAL["email"],
         PERSONAL["phone"],
         PERSONAL["location"][lang],
-        f'<a href="https://{PERSONAL["linkedin"]}" color="{SAGE.hexval()}">{PERSONAL["linkedin"]}</a>',
-        f'<a href="https://{PERSONAL["github"]}" color="{SAGE.hexval()}">{PERSONAL["github"]}</a>',
-        f'<a href="https://{PERSONAL["portfolio"]}" color="{SAGE.hexval()}">{PERSONAL["portfolio"]}</a>',
+        f'<a href="https://{PERSONAL["linkedin"]}" color="{ACCENT.hexval()}">{PERSONAL["linkedin"]}</a>',
+        f'<a href="https://{PERSONAL["github"]}" color="{ACCENT.hexval()}">{PERSONAL["github"]}</a>',
+        f'<a href="https://{PERSONAL["portfolio"]}" color="{ACCENT.hexval()}">{PERSONAL["portfolio"]}</a>',
     ]
-    story.append(Paragraph("  ·  ".join(contact_parts), s("contact")))
+    story.append(Paragraph(" · ".join(contact_parts), s("contact")))
 
-    story.append(Spacer(1, 1.5*mm))
+    # ── Technical Skills — inline bold labels (Jake's style) ────────────
+    section_heading("Technical Skills" if lang == "en" else "Stack Técnico")
+    for label, items in SKILLS[lang]:
+        story.append(Paragraph(
+            f"<b>{label}:</b> {items}",
+            s("skills_line"),
+        ))
 
-    # Profile
-    heading("Perfil" if lang == "pt" else "Profile")
+    # ── Profile — narrative ─────────────────────────────────────────────
+    section_heading("Profile" if lang == "en" else "Perfil")
     story.append(Paragraph(PROFILE[lang], s("body")))
 
-    # Core Stack (keywords + proof)
-    heading("Stack Principal" if lang == "pt" else "Core Stack")
-    for sp in SKILLS_PROOF[lang]:
-        story.append(Paragraph(f"<b>{sp['label']}:</b> {sp['items']}", s("keyword_items")))
-        story.append(Paragraph(sp["proof"], s("skill_proof")))
-
-    # Professional Experience
-    heading("Experiência Profissional" if lang == "pt" else "Professional Experience")
+    # ── Professional Experience — role|date alignment ───────────────────
+    section_heading("Professional Experience" if lang == "en" else "Experiência Profissional")
     for exp in EXPERIENCE[lang]:
-        story.append(Paragraph(exp["role"], s("role")))
-        story.append(Paragraph(
-            f'{exp["company"]} · {exp["period"]}',
-            s("org"),
-        ))
+        story.append(RoleDateLine(exp["role"], exp["period"], width=content_width))
+        story.append(SubheadLine(exp["company"], exp.get("location", ""), width=content_width))
         for b in exp["bullets"]:
             bullet(b)
-        story.append(Spacer(1, 0.8*mm))
+        story.append(Spacer(1, 1*mm))
 
-    # ── PROJECTS & DEPTH ────────────────────────────────────────────────────
+    # ── Education — degree|period alignment ─────────────────────────────
+    section_heading("Education" if lang == "en" else "Formação")
+    for edu in EDUCATION[lang]:
+        story.append(RoleDateLine(edu["degree"], edu["period"], width=content_width))
+        story.append(Paragraph(edu["institution"], s("edu_detail")))
+        story.append(Paragraph(edu["status"], s("edu_detail")))
+        story.append(Spacer(1, 0.5*mm))
 
-    # Engineering Projects
-    heading("Projetos de Engenharia" if lang == "pt" else "Engineering Projects")
+    # ══════════════════════════════════════════════════════════════════════
+    # PAGE 2 — THE DEPTH
+    # ══════════════════════════════════════════════════════════════════════
+    story.append(PageBreak())
+
+    # ── Engineering Projects ────────────────────────────────────────────
+    section_heading("Engineering Projects" if lang == "en" else "Projetos de Engenharia")
     for proj in PROJECTS[lang]:
         proj_block = []
-        header_line = proj["name"]
+        header_line = f'<b>{proj["name"]}</b>'
         if proj["url"]:
-            header_line += f' · <a href="https://{proj["url"]}" color="{SAGE.hexval()}">{proj["url"]}</a>'
+            header_line += f' · <a href="https://{proj["url"]}" color="{ACCENT.hexval()}">{proj["url"]}</a>'
         proj_block.append(Paragraph(header_line, s("project_title")))
         proj_block.append(Paragraph(proj["tech"], s("project_tech")))
         for b in proj["bullets"]:
             proj_block.append(Paragraph(
                 f"<bullet>&bull;</bullet> {b}", s("bullet"),
             ))
-        proj_block.append(Spacer(1, 0.6*mm))
+        proj_block.append(Spacer(1, 0.8*mm))
         story.append(KeepTogether(proj_block))
 
-    # Education
-    heading("Formação" if lang == "pt" else "Education")
-    for edu in EDUCATION[lang]:
-        story.append(Paragraph(edu["degree"], s("role")))
-        story.append(Paragraph(
-            f'{edu["institution"]} · {edu["period"]}',
-            s("org"),
-        ))
-        story.append(Paragraph(edu["status"], s("body_small")))
-        story.append(Spacer(1, 0.5*mm))
-
-    # Certifications with context
-    heading("Certificações" if lang == "pt" else "Certifications")
+    # ── Certifications ──────────────────────────────────────────────────
+    section_heading("Certifications" if lang == "en" else "Certificações")
     for cert in CERTIFICATIONS[lang]:
         line = f"<bullet>&bull;</bullet> <b>{cert['name']}</b> — {cert['issuer']}"
         if cert["context"]:
             line += f" — {cert['context']}"
         story.append(Paragraph(line, s("cert_item")))
 
-    # Languages (inline, no separate heading)
-    story.append(Spacer(1, 1*mm))
-    lang_label = "Idiomas" if lang == "pt" else "Languages"
-    lang_items = LANGUAGES[lang]
-    lang_text = "  \u00b7  ".join(lang_items)
+    # ── Languages ───────────────────────────────────────────────────────
+    section_heading("Languages" if lang == "en" else "Idiomas")
+    story.append(Paragraph(LANGUAGES[lang], s("skills_line")))
+
+    # Portfolio CTA
+    story.append(Spacer(1, 5*mm))
+    cta_text = (
+        "Case studies completos, demos e código-fonte → "
+        if lang == "pt" else
+        "Full case studies, demos & source code → "
+    )
     story.append(Paragraph(
-        "<b>" + lang_label + ":</b> " + lang_text,
-        s("keyword_items"),
+        f'{cta_text}<a href="https://{PERSONAL["portfolio"]}" color="{ACCENT.hexval()}">{PERSONAL["portfolio"]}</a>',
+        s("footer_link"),
     ))
 
-    # ── Build ───────────────────────────────────────────────────────────────
+    # ── Build ───────────────────────────────────────────────────────────
     doc = SimpleDocTemplate(
         output_path,
         pagesize=A4,
-        topMargin=14*mm,
+        topMargin=10*mm,
         bottomMargin=12*mm,
         leftMargin=16*mm,
         rightMargin=16*mm,
     )
-    doc.build(story)
+    doc.lang = lang
+    doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     print(f"  Generated: {output_path}")
 
 
@@ -665,7 +727,8 @@ if __name__ == "__main__":
     pt_path = os.path.join(out_dir, "Isaac-Nathan-CV-PT.pdf")
     en_path = os.path.join(out_dir, "Isaac-Nathan-CV-EN.pdf")
 
-    print("Generating narrative CVs...")
+    print("Generating V3 layered CVs (Jake's style)...")
+    print(f"  Current semester: {SEMESTER} ({SEMESTER_PT} / {SEMESTER_EN})")
     build_pdf("pt", pt_path)
     build_pdf("en", en_path)
     print("Done.")

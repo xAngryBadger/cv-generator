@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/cv-generator/',
+  base: '/cegonha/',
   server: {
     proxy: {
       '/api': 'http://localhost:8000'

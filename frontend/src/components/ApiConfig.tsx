@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getApiUrl, setApiUrl, hasApiUrl } from '../lib/api'
 
@@ -8,15 +8,14 @@ interface ApiConfigProps {
 
 export function ApiConfig({ colabUrl }: ApiConfigProps) {
   const [open, setOpen] = useState(false)
-  const [url, setUrl] = useState('')
+  const [url, setUrl] = useState(getApiUrl)
   const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    setUrl(getApiUrl())
-  }, [])
+  const [connected, setConnected] = useState(hasApiUrl)
 
   const handleSave = () => {
+    if (!url.trim()) return
     setApiUrl(url)
+    setConnected(true)
     setSaved(true)
     setTimeout(() => {
       setSaved(false)
@@ -27,10 +26,11 @@ export function ApiConfig({ colabUrl }: ApiConfigProps) {
   const handleClear = () => {
     setUrl('')
     setApiUrl('')
+    setConnected(false)
     setOpen(false)
   }
 
-  const isConnected = hasApiUrl()
+  const isConnected = connected
 
   return (
     <div className="relative">
@@ -77,7 +77,7 @@ export function ApiConfig({ colabUrl }: ApiConfigProps) {
                 </li>
                 <li className="flex gap-3">
                   <span className="font-serif text-[var(--color-accent)] text-lg leading-none opacity-70 select-none">2</span>
-                  <span>Copie a URL <span className="label-mono text-[var(--color-amber-light)]">ngrok-free.app</span> que aparece na saída</span>
+                  <span>Copie a URL <span className="label-mono text-[var(--color-amber-light)]">trycloudflare.com</span> que aparece na saída</span>
                 </li>
                 <li className="flex gap-3">
                   <span className="font-serif text-[var(--color-accent)] text-lg leading-none opacity-70 select-none">3</span>
@@ -91,7 +91,7 @@ export function ApiConfig({ colabUrl }: ApiConfigProps) {
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://xxxx.ngrok-free.app"
+                placeholder="https://xxxx.trycloudflare.com"
                 className="w-full bg-[var(--color-bg)] border-b border-[var(--color-border)] px-0 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-primary)] transition-colors placeholder:text-[var(--color-text-muted)] font-mono text-xs"
                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
               />

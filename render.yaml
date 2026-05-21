@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: cv-generator-api
+    name: cegonha-api
     runtime: python
     build:
       commands:

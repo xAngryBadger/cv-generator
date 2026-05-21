@@ -8,9 +8,23 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
 from reportlab.lib.enums import TA_LEFT, TA_JUSTIFY
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import io
 import tempfile
 import os
+
+FONT_DIR = "/usr/share/fonts/TTF"
+for _name, _file in [
+    ("DejaVu", "DejaVuSans.ttf"),
+    ("DejaVu-Bold", "DejaVuSans-Bold.ttf"),
+]:
+    _path = os.path.join(FONT_DIR, _file)
+    if os.path.exists(_path):
+        pdfmetrics.registerFont(TTFont(_name, _path))
+
+_FONT = "DejaVu" if "DejaVu" in pdfmetrics._fonts else "Helvetica"
+_FONT_BOLD = "DejaVu-Bold" if "DejaVu-Bold" in pdfmetrics._fonts else "Helvetica-Bold"
 
 app = FastAPI()
 
@@ -49,37 +63,37 @@ BORDER = HexColor("#D4D0C8")
 def make_styles():
     styles = {}
     styles["name"] = ParagraphStyle(
-        "Name", fontName="Helvetica-Bold", fontSize=15,
+        "Name", fontName=_FONT_BOLD, fontSize=15,
         leading=18, textColor=DARK, alignment=TA_LEFT,
         spaceAfter=1*mm,
     )
     styles["title"] = ParagraphStyle(
-        "Title", fontName="Helvetica", fontSize=8.5,
+        "Title", fontName=_FONT, fontSize=8.5,
         leading=11, textColor=AMBER, alignment=TA_LEFT,
         spaceAfter=0.5*mm,
     )
     styles["contact"] = ParagraphStyle(
-        "Contact", fontName="Helvetica", fontSize=7,
+        "Contact", fontName=_FONT, fontSize=7,
         leading=9.5, textColor=MUTED, alignment=TA_LEFT,
         spaceAfter=0,
     )
     styles["section_head"] = ParagraphStyle(
-        "SectionHead", fontName="Helvetica-Bold", fontSize=9.5,
+        "SectionHead", fontName=_FONT_BOLD, fontSize=9.5,
         leading=11.5, textColor=DARK, alignment=TA_LEFT,
         spaceBefore=2.5*mm, spaceAfter=1*mm,
     )
     styles["body"] = ParagraphStyle(
-        "Body", fontName="Helvetica", fontSize=8,
+        "Body", fontName=_FONT, fontSize=8,
         leading=11, textColor=DARK, alignment=TA_JUSTIFY,
         spaceAfter=0.3*mm,
     )
     styles["body_small"] = ParagraphStyle(
-        "BodySmall", fontName="Helvetica", fontSize=7,
+        "BodySmall", fontName=_FONT, fontSize=7,
         leading=9.5, textColor=MUTED, alignment=TA_LEFT,
         spaceAfter=0.2*mm,
     )
     styles["bullet"] = ParagraphStyle(
-        "Bullet", fontName="Helvetica", fontSize=8,
+        "Bullet", fontName=_FONT, fontSize=8,
         leading=11, textColor=DARK, alignment=TA_JUSTIFY,
         leftIndent=8, bulletIndent=0,
         spaceAfter=0.4*mm,
@@ -173,7 +187,7 @@ async def generate_cv(cv_data: CVData):
 
 @app.get("/")
 async def root():
-    return {"message": "CV Generator API"}
+    return {"message": "Cegonha API"}
 
 if __name__ == "__main__":
     import uvicorn

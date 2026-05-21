@@ -4,11 +4,11 @@ import { Preloader } from './components/Preloader'
 import { useLenis } from './hooks/useLenis'
 import { useSmoothContainer } from './hooks/useSmoothContainer'
 import { revealVariants, staggerContainer } from './hooks/useScrollReveal'
-import { apiUrl } from './lib/api'
+import { apiUrl, apiHeaders } from './lib/api'
 import { ApiConfig } from './components/ApiConfig'
 import { BetaBanner } from './components/BetaBanner'
 
-const COLAB_URL = 'https://colab.research.google.com/github/xAngryBadger/cv-generator/blob/main/colab-backend.ipynb'
+const COLAB_URL = 'https://colab.research.google.com/github/xAngryBadger/cegonha/blob/main/colab-backend.ipynb'
 
 type Language = 'pt' | 'en'
 type Template = 'modern' | 'classic' | 'minimal'
@@ -87,20 +87,21 @@ function App() {
     try {
       const response = await fetch(apiUrl('/api/generate-cv'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...apiHeaders() },
         body: JSON.stringify(data),
       })
       if (!response.ok) throw new Error('Failed to generate PDF')
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       setPreviewUrl(url)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `CV-${data.name.split(' ')[0]}-${data.language.toUpperCase()}.pdf`
-      link.click()
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `CV-${data.name.split(' ')[0]}-${data.language.toUpperCase()}.pdf`
+        link.click()
+        setTimeout(() => URL.revokeObjectURL(url), 10000)
   } catch (error) {
     if (error instanceof Error && error.message === 'NO_API_URL') {
-      alert('Configure a URL da API primeiro. Clique em "Sem API" no header e cole a URL do ngrok.')
+      alert('Configure a URL da API primeiro. Clique em "Sem API" no header e cole a URL do Cloudflare.')
     } else {
       console.error('Error generating PDF:', error)
       alert('Erro ao gerar PDF. Verifique se o backend está online.')
@@ -112,7 +113,7 @@ function App() {
 
 return (
     <>
-      {showPreloader && <Preloader title="CV Generator" onComplete={() => setShowPreloader(false)} />}
+      {showPreloader && <Preloader title="Cegonha" onComplete={() => setShowPreloader(false)} />}
 
       <div className="noise-overlay noise-overlay--animated" aria-hidden="true" />
 
@@ -137,7 +138,7 @@ return (
                 </svg>
               </motion.div>
               <div>
-                <h1 className="text-lg font-serif font-normal tracking-tight text-[var(--color-cream)]">CV Generator</h1>
+                <h1 className="text-lg font-serif font-normal tracking-tight text-[var(--color-cream)]">Cegonha</h1>
               </div>
             </div>
       <div className="flex items-center gap-4">
