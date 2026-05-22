@@ -149,7 +149,7 @@ return (
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-6 pt-20 pb-16 lg:px-8">
+        <main className={`max-w-7xl mx-auto px-6 pb-16 lg:px-8 transition-[padding] duration-300 ${bannerVisible ? 'pt-[7rem]' : 'pt-20'}`}>
           <motion.div
             initial="hidden"
             animate="visible"
