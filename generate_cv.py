@@ -302,7 +302,7 @@ PROJECTS = {
             ],
         },
         {
-            "name": "Flora Sensus",
+            "name": "Urutau",
             "url": "github.com/xAngryBadger/flora-sensus",
             "tech": "Flutter · Dart · Drift/SQLite · React · PocketBase · TypeScript",
             "tier": 1,
@@ -418,7 +418,7 @@ PROJECTS = {
             ],
         },
         {
-            "name": "Flora Sensus",
+            "name": "Urutau",
             "url": "github.com/xAngryBadger/flora-sensus",
             "tech": "Flutter · Dart · Drift/SQLite · React · PocketBase · TypeScript",
             "tier": 1,
