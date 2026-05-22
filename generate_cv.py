@@ -186,6 +186,7 @@ PERSONAL = {
     "linkedin": "linkedin.com/in/isaac-nathan-da-silva-barbosa-815b212ab",
     "github": "github.com/xAngryBadger",
     "portfolio": "xangrybadger.github.io/isaac-vitae",
+    "personalSite": "xangrybadger.github.io/nathan",
     "location": {"pt": "Mariana, MG — Brasil", "en": "Mariana, MG — Brazil"},
     "title": {
         "pt": "Desenvolvedor Full-Stack com IA",
@@ -662,6 +663,7 @@ def build_pdf(lang: str, output_path: str):
         f'<a href="https://{PERSONAL["linkedin"]}" color="{ACCENT.hexval()}">{PERSONAL["linkedin"]}</a>',
         f'<a href="https://{PERSONAL["github"]}" color="{ACCENT.hexval()}">{PERSONAL["github"]}</a>',
         f'<a href="https://{PERSONAL["portfolio"]}" color="{ACCENT.hexval()}">{PERSONAL["portfolio"]}</a>',
+    f'<a href="https://{PERSONAL["personalSite"]}" color="{ACCENT.hexval()}">{PERSONAL["personalSite"]}</a>',
     ]
     story.append(Paragraph(" · ".join(contact_parts), s("contact")))
 
