@@ -124,7 +124,7 @@ return (
         className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]"
       >
       <BetaBanner colabUrl={COLAB_URL} onDismiss={() => setBannerVisible(false)} />
-      <header className={`fixed left-0 right-0 z-40 fade-border-bottom h-16 flex items-center transition-top duration-300 ${bannerVisible ? 'top-[44px]' : 'top-0'}`} style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
+      <header className={`fixed left-0 right-0 z-40 fade-border-bottom h-16 flex items-center transition-top duration-300 ${bannerVisible ? 'top-[76px]' : 'top-0'}`} style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(13,17,23,0.8)' }}>
       <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
               <motion.div
