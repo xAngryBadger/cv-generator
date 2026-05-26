@@ -45,15 +45,15 @@ const defaultData: CVData = {
   profile: `Desenvolvedor Full-Stack com IA · Python · FastAPI · React 19 · Azure Cosmos DB · GPT-4.1 · Flutter · PyTorch · 10 meses de experiência profissional. Primeiro contato com Python em 2022 na UFOP (Química Industrial) — Thonny IDE, sem GPT, aulas extras à tarde só para continuar aprendendo.`,
   experience: `Paware Softwares | Desenvolvedor Full-Stack com foco em IA | Out 2025 — Mai 2026
 • Migrei datasets legados do Google Drive para Azure Cosmos DB para Meritage Homes (EUA)
-• Arquitetei pipeline agentic de geração de imagens para o HelloSocial
+• Arquitetei pipeline de geração de imagens para o HelloSocial
 • Resolvi problema cross-platform de MIME types`,
   projects: `HarpIA | github.com/xAngryBadger/harpia
 • Motor de automação criativa com 7+ modelos de IA
-• Pipeline agentic autônomo com GPT-4.1 e schema enforcement
+• Pipeline orquestrado por LLM multi-modelo com GPT-4.1 e schema enforcement
 
 Flora Sensus | github.com/xAngryBadger/flora-sensus
 • App Flutter offline-first para inventário florestal
-• ~24K LOC com sync custom e UUID remapping`,
+• Sync custom e UUID remapping em cascata`,
   education: `Engenharia de Computação | Cruzeiro do Sul | 2024 — 2029 | 5º período
 Engenharia Química | UFSJ | 2022 — 2024 | Período de transição
 Química Industrial | UFOP | 2022 | Onde Python começou`,

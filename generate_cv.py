@@ -199,25 +199,25 @@ PERSONAL = {
 }
 
 OBJECTIVE = {
-    "pt": "Construir sistemas inteligentes que conectam IA, cloud e produto — do pipeline agentic ao deploy em produção.",
-    "en": "Build intelligent systems that connect AI, cloud, and product — from agentic pipelines to production deploy.",
+    "pt": "Construir sistemas inteligentes que conectam IA, cloud e produto — do pipeline orquestrado por LLM ao deploy em produção.",
+    "en": "Build intelligent systems that connect AI, cloud, and product — from LLM-orchestrated pipelines to production deploy.",
 }
 
 PROFILE = {
     "pt": (
         "De Química Industrial para Computação: primeiro Python em 2022 (Thonny IDE, sem GPT, "
-        "aulas extras à tarde). Construí o ForestAI do zero anotando manualmente centenas de "
+        "aulas extras à tarde). Construí o ForestAI do zero anotando manualmente "
         "imagens de drone da Fundação Renova. Na Paware, migrei centenas de GB para Azure Cosmos DB "
-        "(Meritage Homes, EUA) e arquitetei pipelines agentic de IA para o HelloSocial "
-        "(GPT-4.1 tool calling, DALL-E 3, Flux). Aprendo resolvendo problemas reais — "
+        "(Meritage Homes, EUA) e arquitetei pipelines orquestrados por LLM para o HelloSocial "
+        "(GPT-4.1, DALL-E 3, Flux). Aprendo resolvendo problemas reais — "
         "de MIME type cross-platform a agentes ReAct com schema enforcement."
     ),
     "en": (
         "From Industrial Chemistry to Computer Engineering: first Python in 2022 (Thonny IDE, no GPT, "
-        "extra afternoon classes). Built ForestAI from scratch, manually annotating hundreds of "
+        "extra afternoon classes). Built ForestAI from scratch, manually annotating "
         "drone images from Fundação Renova. At Paware, migrated hundreds of GB to Azure Cosmos DB "
-        "(Meritage Homes, USA) and architected agentic AI pipelines for HelloSocial "
-        "(GPT-4.1 tool calling, DALL-E 3, Flux). I learn by solving real problems — "
+        "(Meritage Homes, USA) and architected LLM-orchestrated pipelines for HelloSocial "
+        "(GPT-4.1, DALL-E 3, Flux). I learn by solving real problems — "
         "from cross-platform MIME types to ReAct agents with schema enforcement."
     ),
 }
@@ -229,7 +229,7 @@ SKILLS = {
         ("Frontend", "React 19 · TypeScript · JavaScript · Flutter · Tailwind CSS v4 · Vite · React Native (Expo 54)"),
         ("Cloud & Infra", "Azure · Docker · Git / GitHub · PocketBase · Linux (CachyOS/Hyprland) · PyInstaller / Inno Setup"),
         ("Integrações", "Mercado Pago PIX · Canva Connect API · Placid API · Templated.io · Pexels API · NVIDIA NIM API"),
-        ("Outros", "Inglês Fluente · Cibersegurança · Metodologias Ágeis · Testes de API · NiceGUI · Rich CLI · xlwings/COM"),
+        ("Outros", "Inglês Fluente · Cibersegurança · Metodologias Ágeis · Testes de API · FastAPI + Jinja2 · Rich CLI · xlwings/COM"),
     ],
     "en": [
         ("AI / ML", "GPT-4.1 · Azure OpenAI · PyTorch · DeepForest · OpenCV · Ollama · DALL-E 3 · Flux · Sora · Veo 3.1 · Gemini SDK · scikit-learn"),
@@ -237,7 +237,7 @@ SKILLS = {
         ("Frontend", "React 19 · TypeScript · JavaScript · Flutter · Tailwind CSS v4 · Vite · React Native (Expo 54)"),
         ("Cloud & Infra", "Azure · Docker · Git / GitHub · PocketBase · Linux (CachyOS/Hyprland) · PyInstaller / Inno Setup"),
         ("Integrations", "Mercado Pago PIX · Canva Connect API · Placid API · Templated.io · Pexels API · NVIDIA NIM API"),
-        ("Other", "Fluent English · Cybersecurity · Agile Methodologies · API Testing · NiceGUI · Rich CLI · xlwings/COM"),
+        ("Other", "Fluent English · Cybersecurity · Agile Methodologies · API Testing · FastAPI + Jinja2 · Rich CLI · xlwings/COM"),
     ],
 }
 
@@ -251,7 +251,7 @@ EXPERIENCE = {
             "bullets": [
                 "Migrei centenas de GB de datasets legados do Google Drive para Azure Cosmos DB (Meritage Homes, EUA) — pipeline com extração automatizada, compressão e injeção em painéis para agente WhatsApp. Docker + validação de schema com rollback automático.",
                 "Resolvi problema cross-platform de MIME types (Android vs iOS) — validação que virou o backbone da migração Cosmos DB, com testes extensivos em dispositivos iOS.",
-                "Arquitetei pipeline agentic de geração de imagens para o HelloSocial — agente GPT-4.1 com tool calling (até 10 iterações), Flux Kontext Pro + DALL-E 3 + Placid/Canva, fallback SQLite/PIL local.",
+                "Arquitetei pipeline de geração de imagens para o HelloSocial — pipeline multi-etapa com GPT-4.1 (geração, curadoria, composição, validação), Flux Kontext Pro + DALL-E 3 + Placid/Canva, fallback SQLite/PIL local.",
             ],
         },
         {
@@ -274,7 +274,7 @@ EXPERIENCE = {
             "bullets": [
                 "Migrated hundreds of GB of legacy datasets from Google Drive to Azure Cosmos DB (Meritage Homes, USA) — automated extraction, compression, injection into panels for WhatsApp agent. Docker + schema validation with auto-rollback.",
                 "Resolved cross-platform MIME type issue (Android vs iOS) — validation layer that became the backbone of the Cosmos DB migration, with extensive testing on iOS devices.",
-                "Architected agentic image-generation pipeline for HelloSocial — GPT-4.1 agent with tool calling (up to 10 iterations), Flux Kontext Pro + DALL-E 3 + Placid/Canva, local SQLite/PIL fallback.",
+                "Architected image-generation pipeline for HelloSocial — multi-step pipeline with GPT-4.1 (generation, curation, composition, validation), Flux Kontext Pro + DALL-E 3 + Placid/Canva, local SQLite/PIL fallback.",
             ],
         },
         {
@@ -298,7 +298,7 @@ PROJECTS = {
             "tech": "Python · GPT-4.1 · DALL-E 3 · Flux 2.0 Pro · Sora · Veo 3.1 · Azure Cosmos DB · SQLite",
             "tier": 1,
             "bullets": [
-                "Motor de automação criativa com 7+ modelos de IA — agente GPT-4.1 com tool calling, pipeline agentic autônomo (copywriting, busca de imagens, composição de designs, geração de vídeo). Stack leve por padrão (SQLite + PIL local) com fallback para APIs pagas.",
+                "Motor de automação criativa com 7+ modelos de IA — pipeline orquestrado por LLM multi-etapa: copywriting, busca de imagens, composição de designs, geração de vídeo. Stack leve por padrão (SQLite + PIL local) com fallback para APIs pagas.",
                 "6.900+ LOC Python async com testes de segurança e zero hardcoded secrets. Backend swap: SQLite local para Azure Cosmos DB + Blob Storage, alternado via env var. Pronto para cron com file-locking e recuperação de lotes travados.",
             ],
         },
@@ -308,8 +308,8 @@ PROJECTS = {
             "tech": "Flutter · Dart · Drift/SQLite · React · PocketBase · TypeScript",
             "tier": 1,
             "bullets": [
-                "App Flutter offline-first para inventário florestal com motor de sincronização custom — detecção de remapping em cascata pela FK chain (Propriedade → UT → Parcela → Planta → Foto) e rollback atômico via transações Drift.",
-                "~24K LOC — arquitetura e lógica de sync construídas do zero; código gerado com apoio de LLM (web) e revisado manualmente. Painel admin React com auth, fotos, relatórios e exportação XLSX/PDF/CSV.",
+"App Flutter offline-first para inventário florestal com serviço de sync custom — remapping de UUIDs em cascata pelas tabelas relacionadas e rollback transacional em caso de falha.",
+            "Arquitetura e lógica de sync construídas do zero; código gerado com apoio de LLM (web) e revisado manualmente. Painel admin React com auth, fotos, relatórios e exportação XLSX/PDF/CSV.",
             ],
         },
         {
@@ -319,7 +319,7 @@ PROJECTS = {
             "tier": 1,
             "bullets": [
                 "Detecção e classificação de espécies florestais com Deep Learning — construído do zero sem IA-assisted coding. Stack Overflow + Thonny IDE apenas.",
-                "Anotação manual de centenas de imagens de drone da Fundação Renova (bounding boxes), treinamento DeepForest/YOLO em GPU local, splits estratificadas. Interpretação de curvas no TensorBoard — detectando memorização vs generalização.",
+                "Anotação manual de imagens de drone da Fundação Renova (bounding boxes), treinamento DeepForest em GPU local, splits estratificadas. Interpretação de curvas no TensorBoard — detectando memorização vs generalização.",
             ],
         },
         {
@@ -335,11 +335,11 @@ PROJECTS = {
         {
             "name": "Orca",
             "url": "github.com/xAngryBadger/orca",
-            "tech": "Python · pandas · NiceGUI · Rich CLI · openpyxl · unittest",
+            "tech": "Python · pandas · FastAPI · Jinja2 · Rich CLI · openpyxl · unittest",
             "tier": 2,
             "bullets": [
                 "Motor de planejamento operacional para restauração florestal em larga escala — geração automática de dossiês executivos com alocação de equipes, territórios e cronogramas.",
-                "Gerenciamento de tarifas e custos operacionais. Interface NiceGUI + CLI Rich com suite de testes unitários.",
+                "Gerenciamento de tarifas e custos operacionais. Interface FastAPI + Jinja2 + CLI Rich com suite de testes unitários.",
             ],
         },
         {
@@ -414,7 +414,7 @@ PROJECTS = {
             "tech": "Python · GPT-4.1 · DALL-E 3 · Flux 2.0 Pro · Sora · Veo 3.1 · Azure Cosmos DB · SQLite",
             "tier": 1,
             "bullets": [
-                "Creative automation engine with 7+ AI models — GPT-4.1 agent with tool calling, autonomous agentic pipeline (copywriting, image search, design compositing, video generation). Lightweight stack by default (SQLite + local PIL) with fallback to paid APIs.",
+                "Creative automation engine with 7+ AI models — multi-model pipeline with GPT-4.1: copywriting, image search, design compositing, video generation. Lightweight stack by default (SQLite + local PIL) with fallback to paid APIs.",
                 "6,900+ LOC async Python with security tests and zero hardcoded secrets. Backend swap: local SQLite to Azure Cosmos DB + Blob Storage, toggled via env var. Cron-ready with file-locking and stuck batch recovery.",
             ],
         },
@@ -424,8 +424,8 @@ PROJECTS = {
             "tech": "Flutter · Dart · Drift/SQLite · React · PocketBase · TypeScript",
             "tier": 1,
             "bullets": [
-                "Flutter offline-first app for forest inventory with custom sync engine — cascading remap detection through FK chain (Propriedade → UT → Parcela → Planta → Foto) and atomic rollback via Drift transactions.",
-                "~24K LOC — architecture and sync logic built from scratch; code generated with LLM assistance (web) and manually reviewed. React admin panel with auth, photos, reports, and XLSX/PDF/CSV export.",
+"Flutter offline-first app for forest inventory with custom sync service — cascading UUID remapping across related tables and transactional rollback on failure.",
+            "Architecture and sync logic built from scratch; code generated with LLM assistance (web) and manually reviewed. React admin panel with auth, photos, reports, and XLSX/PDF/CSV export.",
             ],
         },
         {
@@ -435,7 +435,7 @@ PROJECTS = {
             "tier": 1,
             "bullets": [
                 "Forest species detection and classification with Deep Learning — built from scratch without AI-assisted coding. Stack Overflow + Thonny IDE only.",
-                "Manual annotation of hundreds of drone images from Fundação Renova (bounding boxes), DeepForest/YOLO training on local GPU, stratified splits. TensorBoard curve interpretation — detecting memorization vs generalization.",
+                "Manual annotation of drone images from Fundação Renova (bounding boxes), DeepForest training on local GPU, stratified splits. TensorBoard curve interpretation — detecting memorization vs generalization.",
             ],
         },
         {
@@ -451,11 +451,11 @@ PROJECTS = {
         {
             "name": "Orca",
             "url": "github.com/xAngryBadger/orca",
-            "tech": "Python · pandas · NiceGUI · Rich CLI · openpyxl · unittest",
+            "tech": "Python · pandas · FastAPI · Jinja2 · Rich CLI · openpyxl · unittest",
             "tier": 2,
             "bullets": [
                 "Operational planning engine for large-scale forest restoration — automatic generation of executive dossiers with crew allocation, territory mapping, and schedules.",
-                "Tariff and operational cost management. NiceGUI + Rich CLI interface with unit test suite.",
+                "Tariff and operational cost management. FastAPI + Jinja2 + Rich CLI interface with unit test suite.",
             ],
         },
         {
